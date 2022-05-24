@@ -9,10 +9,10 @@
 
   <properties>
     <!-- use the following if you're compiling with JDK 8-->
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+<!--    <maven.compiler.source>1.8</maven.compiler.source>-->
+<!--    <maven.compiler.target>1.8</maven.compiler.target>-->
     <!-- comment the 2 lines above and uncomment the line bellow if you're compiling with JDK 11 or 17 -->
-    <!--    <maven.compiler.release>11</maven.compiler.release>-->
+        <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <gatling.version>${project.version}</gatling.version>
     <gatling-maven-plugin.version>4.1.6</gatling-maven-plugin.version>
