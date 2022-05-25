@@ -21,6 +21,15 @@ public class DemostoreApiSimulation extends Simulation {
     Map.entry("authorization", "Bearer #{jwt}")
   );
 
+  private static class Authentication {
+    private static ChainBuilder authenticate =
+      exec(http("Authenticate")
+        .post("/api/authenticate")
+        .body(StringBody("{\"username\": \"admin\",\"password\": \"admin\"}"))
+        .check(status().is(200))
+        .check(jsonPath("$.token").saveAs("jwt")));
+  }
+
 
   private ScenarioBuilder scn = scenario("DemostoreApiSimulation")
     .exec(
@@ -38,12 +47,7 @@ public class DemostoreApiSimulation extends Simulation {
         .get("/api/product/34")
     )
     .pause(2)
-    .exec(
-      http("Authenticate")
-        .post("/api/authenticate")
-        .body(RawFileBody("gatlingdemostoreapi/demostoreapisimulation/authenticate-admin.json"))
-        .check(jsonPath("$.token").saveAs("jwt"))
-    )
+    .exec(Authentication.authenticate)
     .pause(2)
     .exec(
       http("Update product")
