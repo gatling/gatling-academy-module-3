@@ -1,7 +1,7 @@
 {
-    "name": "Pink Glasses",
-    "description": "Pink Glasses",
+    "name": "Orange Glasses",
+    "description": "Orange Glasses",
     "price": "15.99",
-    "categoryId": 6,
-    "image": "pink-glasses.jpg"
+    "categoryId": 7,
+    "image": "orange-glasses.jpg"
 }

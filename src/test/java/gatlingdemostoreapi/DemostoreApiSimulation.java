@@ -44,48 +44,46 @@ public class DemostoreApiSimulation extends Simulation {
           .check(jsonPath("$.name").is("Everyone")));
   }
 
+  private static class Products {
+    private static ChainBuilder list =
+        exec(http("List products")
+          .get("/api/product?category=7")
+          .check(jsonPath("$[?(@.categoryId != \"7\")]").notExists()));
+
+    private static ChainBuilder get =
+        exec(http("Get product")
+          .get("/api/product/34")
+          .check(jsonPath("$.id").ofInt().is(34)));
+
+    private static ChainBuilder update =
+       exec(http("Update product")
+          .put("/api/product/34")
+          .headers(authorizationHeaders)
+          .body(RawFileBody("gatlingdemostoreapi/demostoreapisimulation/update-product.json"))
+          .check(jsonPath("$.price").is("15.99")));
+
+    private static ChainBuilder create =
+       repeat(3, "productCount").on(
+         exec(http("Create product #{productCount}")
+                 .post("/api/product")
+                 .headers(authorizationHeaders)
+                 .body(RawFileBody("gatlingdemostoreapi/demostoreapisimulation/create-product#{productCount}.json")))
+       );
+  }
+
 
   private ScenarioBuilder scn = scenario("DemostoreApiSimulation")
     .exec(Categories.list)
     .pause(2)
-    .exec(
-      http("List products")
-        .get("/api/product?category=7")
-    )
+    .exec(Products.list)
     .pause(2)
-    .exec(
-      http("Get product")
-        .get("/api/product/34")
-    )
+    .exec(Products.get)
     .pause(2)
     .exec(Authentication.authenticate)
     .pause(2)
-    .exec(
-      http("Update product")
-        .put("/api/product/34")
-        .headers(authorizationHeaders)
-        .body(RawFileBody("gatlingdemostoreapi/demostoreapisimulation/update-product.json")))
+    .exec(Products.update)
     .pause(2)
-    .exec(
-      http("Create product 1")
-        .post("/api/product")
-        .headers(authorizationHeaders)
-        .body(RawFileBody("gatlingdemostoreapi/demostoreapisimulation/create-product1.json"))
-    )
-    .pause(2)
-    .exec(
-      http("Create product 2")
-        .post("/api/product")
-        .headers(authorizationHeaders)
-        .body(RawFileBody("gatlingdemostoreapi/demostoreapisimulation/create-product2.json"))
-    )
-    .pause(2)
-    .exec(
-      http("Create product 3")
-        .post("/api/product")
-        .headers(authorizationHeaders)
-        .body(RawFileBody("gatlingdemostoreapi/demostoreapisimulation/create-product3.json"))
-    )
+    .exec(Products.create)
     .pause(2)
     .exec(Categories.update);
 
