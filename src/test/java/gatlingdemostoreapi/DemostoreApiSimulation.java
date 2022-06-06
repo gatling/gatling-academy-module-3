@@ -60,6 +60,11 @@ public class DemostoreApiSimulation extends Simulation {
     private static FeederBuilder.Batchable<String> productsFeeder =
             csv("data/products.csv").circular();
 
+    private static ChainBuilder listAll =
+            exec(http("List all products")
+                    .get("/api/product")
+                    .check(jmesPath("[*]").ofList().saveAs("allProducts")));
+
     private static ChainBuilder list =
             exec(http("List products")
                     .get("/api/product?category=7")
@@ -102,6 +107,43 @@ public class DemostoreApiSimulation extends Simulation {
                             .post("/api/product")
                             .headers(authorizationHeaders)
                             .body(ElFileBody("gatlingdemostoreapi/demostoreapisimulation/create-product.json")));
+  }
+
+  private static class UserJourneys {
+
+      private static Duration minPause = Duration.ofMillis(200);
+      private static Duration maxPause = Duration.ofSeconds(3);
+
+      public static ChainBuilder admin =
+          exec(initSession)
+          .exec(Categories.list)
+          .pause(minPause, maxPause)
+          .exec(Products.list)
+          .pause(minPause, maxPause)
+          .exec(Products.get)
+          .pause(minPause, maxPause)
+          .exec(Products.update)
+          .pause(minPause, maxPause)
+          .repeat(3).on(exec(Products.create))
+          .pause(minPause, maxPause)
+          .exec(Categories.update);
+
+      public static ChainBuilder priceScrapper =
+          exec(
+                  Categories.list,
+                  Products.listAll
+          );
+
+      public static ChainBuilder priceUpdater =
+          exec(initSession)
+          .exec(Products.listAll)
+          .repeat("#{allProducts.size()}", "productIndex").on(
+                  exec(session -> {
+                      int index = session.getInt("productIndex");
+                      List<Object> allProducts = session.getList("allProducts");
+                      return session.set("product", allProducts.get(index));
+                  })
+          .exec(Products.update));
   }
 
 
