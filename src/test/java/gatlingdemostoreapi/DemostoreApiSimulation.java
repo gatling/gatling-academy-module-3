@@ -1,5 +1,6 @@
 package gatlingdemostoreapi;
 
+import java.time.Duration;
 import java.util.*;
 
 import io.gatling.javaapi.core.*;
@@ -118,7 +119,14 @@ public class DemostoreApiSimulation extends Simulation {
           .pause(2)
           .exec(Categories.update);
 
-  {
-    setUp(scn.injectOpen(atOnceUsers(1))).protocols(httpProtocol);
-  }
+    {
+        setUp(
+                scn.injectOpen(
+                        atOnceUsers(3),
+                        nothingFor(Duration.ofSeconds(5)),
+                        rampUsers(10).during(Duration.ofSeconds(20)),
+                        nothingFor(Duration.ofSeconds(10)),
+                        constantUsersPerSec(1).during(Duration.ofSeconds(20))))
+                .protocols(httpProtocol);
+    }
 }
