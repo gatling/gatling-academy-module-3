@@ -129,41 +129,48 @@ public class DemostoreApiSimulation extends Simulation {
           .exec(Categories.update);
 
       public static ChainBuilder priceScrapper =
-          exec(
-                  Categories.list,
-                  Products.listAll
-          );
+          exec(Categories.list)
+          .pause(minPause, maxPause)
+          .exec(Products.listAll);
 
       public static ChainBuilder priceUpdater =
           exec(initSession)
           .exec(Products.listAll)
+          .pause(minPause, maxPause)
           .repeat("#{allProducts.size()}", "productIndex").on(
                   exec(session -> {
                       int index = session.getInt("productIndex");
                       List<Object> allProducts = session.getList("allProducts");
                       return session.set("product", allProducts.get(index));
                   })
-          .exec(Products.update));
+          .exec(Products.update)
+          .pause(minPause, maxPause));
   }
 
-
-  private ScenarioBuilder scn = scenario("DemostoreApiSimulation")
-          .exec(initSession)
-          .exec(Categories.list)
-          .pause(2)
-          .exec(Products.list)
-          .pause(2)
-          .exec(Products.get)
-          .pause(2)
-          .exec(Products.update)
-          .pause(2)
-          .repeat(3).on(exec(Products.create))
-          .pause(2)
-          .exec(Categories.update);
+  private static class Scenarios {
+      public static ScenarioBuilder defaultScn = scenario("Default load test")
+              .during(Duration.ofSeconds(60))
+              .on(
+                      randomSwitch().on(
+                              Choice.withWeight(20d, exec(UserJourneys.admin)),
+                              Choice.withWeight(40d, exec(UserJourneys.priceScrapper)),
+                              Choice.withWeight(40d, exec(UserJourneys.priceUpdater))
+                      )
+              );
+      
+      public static ScenarioBuilder noAdminsScn = scenario("Load test without admin users")
+              .during(Duration.ofSeconds(60))
+              .on(
+                      randomSwitch().on(
+                              Choice.withWeight(60d, exec(UserJourneys.priceScrapper)),
+                              Choice.withWeight(40d, exec(UserJourneys.priceUpdater))
+                      )
+              );
+  }
 
     {
         setUp(
-                scn.injectOpen(constantUsersPerSec(2).during(Duration.ofMinutes(3)))
+                Scenarios.defaultScn.injectOpen(constantUsersPerSec(2).during(Duration.ofMinutes(3)))
                         .protocols(httpProtocol)
                         .throttle(
                                 reachRps(10).in(Duration.ofSeconds(30)),
