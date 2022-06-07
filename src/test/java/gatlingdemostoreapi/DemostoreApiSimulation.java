@@ -178,8 +178,8 @@ public class DemostoreApiSimulation extends Simulation {
 
     {
         setUp(
-                Scenarios.defaultScn
-                        .injectOpen(rampUsers(USER_COUNT).during(RAMP_DURATION))
-                        .protocols(httpProtocol));
+                Scenarios.defaultScn.injectOpen(rampUsers(USER_COUNT).during(RAMP_DURATION)),
+                Scenarios.noAdminsScn.injectOpen(rampUsers(5).during(Duration.ofSeconds(30))))
+                .protocols(httpProtocol);
     }
 }
