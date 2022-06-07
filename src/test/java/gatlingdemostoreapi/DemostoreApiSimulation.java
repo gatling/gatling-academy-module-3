@@ -22,6 +22,14 @@ public class DemostoreApiSimulation extends Simulation {
           Map.entry("authorization", "Bearer #{jwt}")
   );
 
+  private static final int USER_COUNT = Integer.parseInt(System.getProperty("USERS", "5"));
+
+  private static final Duration RAMP_DURATION =
+          Duration.ofSeconds(Integer.parseInt(System.getProperty("RAMP_DURATION", "10")));
+
+  private static final Duration TEST_DURATION =
+          Duration.ofSeconds(Integer.parseInt(System.getProperty("DURATION", "60")));
+
   private static ChainBuilder initSession = exec(session -> session.set("authenticated", false));
 
   private static class Authentication {
@@ -149,7 +157,7 @@ public class DemostoreApiSimulation extends Simulation {
 
   private static class Scenarios {
       public static ScenarioBuilder defaultScn = scenario("Default load test")
-              .during(Duration.ofSeconds(60))
+              .during(TEST_DURATION)
               .on(
                       randomSwitch().on(
                               Choice.withWeight(20d, exec(UserJourneys.admin)),
@@ -157,7 +165,7 @@ public class DemostoreApiSimulation extends Simulation {
                               Choice.withWeight(40d, exec(UserJourneys.priceUpdater))
                       )
               );
-      
+
       public static ScenarioBuilder noAdminsScn = scenario("Load test without admin users")
               .during(Duration.ofSeconds(60))
               .on(
@@ -170,13 +178,8 @@ public class DemostoreApiSimulation extends Simulation {
 
     {
         setUp(
-                Scenarios.defaultScn.injectOpen(constantUsersPerSec(2).during(Duration.ofMinutes(3)))
-                        .protocols(httpProtocol)
-                        .throttle(
-                                reachRps(10).in(Duration.ofSeconds(30)),
-                                holdFor(Duration.ofSeconds(60)),
-                                jumpToRps(20),
-                                holdFor(Duration.ofSeconds(60))))
-                .maxDuration(Duration.ofMinutes(3));
+                Scenarios.defaultScn
+                        .injectOpen(rampUsers(USER_COUNT).during(RAMP_DURATION))
+                        .protocols(httpProtocol));
     }
 }
