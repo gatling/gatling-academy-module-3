@@ -21,13 +21,16 @@ public class DemostoreApiSimulation extends Simulation {
     Map.entry("authorization", "Bearer #{jwt}")
   );
 
+  private static ChainBuilder initSession = exec(session -> session.set("authenticated", false));
+
   private static class Authentication {
     private static ChainBuilder authenticate =
       exec(http("Authenticate")
         .post("/api/authenticate")
         .body(StringBody("{\"username\": \"admin\",\"password\": \"admin\"}"))
         .check(status().is(200))
-        .check(jmesPath("token").saveAs("jwt")));
+        .check(jmesPath("token").saveAs("jwt")))
+        .exec(session -> session.set("authenticated", true)));
   }
 
   private static class Categories {
@@ -73,6 +76,7 @@ public class DemostoreApiSimulation extends Simulation {
 
 
   private ScenarioBuilder scn = scenario("DemostoreApiSimulation")
+    .exec(initSession)
     .exec(Categories.list)
     .pause(2)
     .exec(Products.list)
