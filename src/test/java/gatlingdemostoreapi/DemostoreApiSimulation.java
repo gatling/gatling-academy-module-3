@@ -30,7 +30,7 @@ public class DemostoreApiSimulation extends Simulation {
         .body(StringBody("{\"username\": \"admin\",\"password\": \"admin\"}"))
         .check(status().is(200))
         .check(jmesPath("token").saveAs("jwt")))
-        .exec(session -> session.set("authenticated", true)));
+        .exec(session -> session.set("authenticated", true));
   }
 
   private static class Categories {
