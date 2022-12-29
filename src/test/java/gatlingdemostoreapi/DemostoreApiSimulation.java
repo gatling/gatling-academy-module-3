@@ -25,12 +25,13 @@ public class DemostoreApiSimulation extends Simulation {
 
   private static class Authentication {
     private static ChainBuilder authenticate =
-      exec(http("Authenticate")
-        .post("/api/authenticate")
-        .body(StringBody("{\"username\": \"admin\",\"password\": \"admin\"}"))
-        .check(status().is(200))
-        .check(jmesPath("token").saveAs("jwt")))
-        .exec(session -> session.set("authenticated", true));
+      doIf(session -> !session.getBoolean("authenticated")).then(
+        exec(http("Authenticate")
+          .post("/api/authenticate")
+          .body(StringBody("{\"username\": \"admin\",\"password\": \"admin\"}"))
+          .check(status().is(200))
+          .check(jmesPath("token").saveAs("jwt")))
+          .exec(session -> session.set("authenticated", true));
   }
 
   private static class Categories {
